@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vistify — Conjuntos</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .tryon-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(14,14,18,0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            display: none;
+        }
+        .tryon-modal.active { display: flex; }
+        .tryon-modal-inner {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        .tryon-modal img {
+            width: 100%;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <a href="../index.html" class="navbar-logo">Vistify</a>
+    <ul class="navbar-links">
+        <li><a href="avatar.html">👤 Avatar</a></li>
+        <li><a href="ropa.html">👗 Mi Ropa</a></li>
+        <li><a href="conjuntos.html" class="active">✨ Conjuntos</a></li>
+    </ul>
+</nav>
+
+<!-- Loader -->
+<div class="loader-overlay" id="loader">
+    <div class="spinner"></div>
+    <p class="loader-text">Calculando conjuntos...</p>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Modal probador -->
+<div class="tryon-modal" id="tryonModal">
+    <div class="tryon-modal-inner">
+        <h3 style="margin-bottom:0.5rem;">👗 Probador Virtual</h3>
+        <p style="color:var(--text-muted); font-size:0.9rem;" id="tryonLabel"></p>
+        <img id="tryonImg" src="" alt="Resultado">
+        <button class="btn btn-outline btn-full" onclick="closeTryon()">Cerrar</button>
+    </div>
+</div>
+
+<!-- Contenido -->
+<div class="page-container">
+    <div class="page-header">
+        <span class="step-badge">PASO 3 DE 3</span>
+        <h1 class="page-title">✨ Conjuntos Recomendados</h1>
+        <p class="page-subtitle">Combinaciones basadas en teoría del color y compatibilidad de estilos</p>
+    </div>
+
+    <!-- Botón generar -->
+    <div style="margin-bottom:2rem;">
+        <button class="btn btn-primary" id="btnGenerar" style="font-size:1.05rem; padding:0.9rem 2.5rem;">
+            ✨ Generar mis conjuntos
+        </button>
+    </div>
+
+    <!-- Lista de conjuntos -->
+    <div id="outfitsSection" style="display:none;">
+        <div id="outfitsList" style="display:flex; flex-direction:column; gap:1rem;"></div>
+    </div>
+
+    <!-- Estado vacío -->
+    <div id="emptyState" style="display:none; text-align:center; padding:4rem 0;">
+        <div style="font-size:3rem; margin-bottom:1rem;">👗</div>
+        <p style="color:var(--text-muted);">Primero analiza tu ropa en <a href="ropa.html" style="color:var(--accent);">Mi Ropa</a></p>
+    </div>
+</div>
+
+<script src="../js/main.js"></script>
+<script>
+    document.getElementById("btnGenerar").addEventListener("click", async () => {
+        showLoader("Calculando los mejores conjuntos...");
+        try {
+            const res  = await fetch("/api/conjuntos");
+            const data = await res.json();
+            hideLoader();
+            if (!data.ok) { showToast(data.error, "error"); return; }
+            renderOutfits(data.conjuntos);
+            document.getElementById("outfitsSection").style.display = "block";
+            showToast(`${data.conjuntos.length} conjuntos encontrados`);
+        } catch(e) {
+            hideLoader();
+            showToast("Error conectando con el servidor", "error");
+        }
+    });
+
+    function renderOutfits(outfits) {
+        const list = document.getElementById("outfitsList");
+        list.innerHTML = "";
+        outfits.forEach(o => {
+            const scoreColor = o.score >= 80 ? "#48c9b0" : o.score >= 60 ? "#f0c040" : "#e05050";
+            const card = document.createElement("div");
+            card.className = "outfit-card";
+            card.innerHTML = `
+                <div class="outfit-rank">#${o.rank}<br><span style="font-size:1rem;">${o.score}</span></div>
+                <div class="outfit-info">
+                    <div class="outfit-label">${o.label}</div>
+                    <div class="score-bar-bg">
+                        <div class="score-bar-fill" style="width:${o.score}%;background:${scoreColor}"></div>
+                    </div>
+                    <div class="outfit-meta" style="margin-top:4px;">🎨 ${o.color_exp}</div>
+                    <div class="outfit-meta">✨ ${o.style_exp}</div>
+                    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                        ${o.prendas.map(p => `
+                            <span style="background:var(--bg3);border:1px solid var(--border);
+                                         border-radius:6px;padding:2px 8px;font-size:0.78rem;
+                                         display:flex;align-items:center;gap:4px;">
+                                <span style="width:8px;height:8px;border-radius:50%;
+                                             background:${p.hex};display:inline-block;
+                                             border:1px solid var(--border)"></span>
+                                ${p.tipo}
+                            </span>
+                        `).join("")}
+                    </div>
+                </div>
+                <button class="btn btn-outline" onclick="openTryon(${o.rank}, '${o.label.replace(/'/g, '')}')">
+                    👗 Probar
+                </button>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    async function openTryon(rank, label) {
+        document.getElementById("tryonLabel").textContent = label;
+        document.getElementById("tryonImg").style.display = "none";
+        document.getElementById("tryonModal").classList.add("active");
+        showLoader("Probando conjunto...");
+        try {
+            const res  = await fetch(`/api/tryon/${rank}`, { method: "POST" });
+            const data = await res.json();
+            hideLoader();
+            if (!data.ok) { showToast(data.error, "error"); return; }
+            const img = document.getElementById("tryonImg");
+            img.src = data.imagen + "?t=" + Date.now();
+            img.style.display = "block";
+        } catch(e) {
+            hideLoader();
+            showToast("Error conectando con el servidor", "error");
+        }
+    }
+
+    function closeTryon() {
+        document.getElementById("tryonModal").classList.remove("active");
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vistify — Tu probador virtual</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Fondo con gradiente animado */
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 20% 40%, rgba(72,201,176,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 60% at 80% 60%, rgba(162,155,254,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-logo {
+            font-size: 5rem;
+            font-weight: 900;
+            letter-spacing: -3px;
+            background: linear-gradient(90deg, #48c9b0, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            animation: fadeUp 0.8s ease both;
+        }
+
+        .hero-tagline {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            animation: fadeUp 0.8s 0.15s ease both;
+        }
+
+        .hero-tagline strong { color: var(--text); }
+
+        .hero-cta {
+            animation: fadeUp 0.8s 0.3s ease both;
+            margin-bottom: 4rem;
+        }
+
+        /* Pasos */
+        .steps {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeUp 0.8s 0.45s ease both;
+        }
+
+        .step {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem 1.2rem;
+            width: 200px;
+            text-align: center;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .step:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+        }
+
+        .step-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+        .step-title { font-weight: 700; margin-bottom: 0.3rem; }
+        .step-desc { font-size: 0.82rem; color: var(--text-muted); }
+
+        /* Flecha entre pasos */
+        .step-arrow {
+            color: var(--border);
+            font-size: 1.5rem;
+            align-self: center;
+            margin-top: -1rem;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Footer */
+        .hero-footer {
+            position: absolute;
+            bottom: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <span class="navbar-logo">Vistify</span>
+    <ul class="navbar-links">
+        <li><a href="pages/avatar.html">👤 Avatar</a></li>
+        <li><a href="pages/ropa.html">👗 Mi Ropa</a></li>
+        <li><a href="pages/conjuntos.html">✨ Conjuntos</a></li>
+    </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <h1 class="hero-logo">Vistify</h1>
+    <p class="hero-tagline">
+        Tu <strong>probador virtual inteligente</strong> · Prueba ropa y descubre<br>
+        los conjuntos que mejor te quedan
+    </p>
+
+    <div class="hero-cta">
+        <a href="pages/avatar.html" class="btn btn-primary" style="font-size:1.1rem; padding: 1rem 2.5rem;">
+            Empezar ahora →
+        </a>
+    </div>
+
+    <!-- Pasos -->
+    <div class="steps">
+        <div class="step">
+            <div class="step-icon">📸</div>
+            <div class="step-title">Tu foto</div>
+            <div class="step-desc">Sube una foto frontal y generamos tu avatar con medidas reales</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+            <div class="step-icon">👗</div>
+            <div class="step-title">Tu ropa</div>
+            <div class="step-desc">Sube fotos de tus prendas y las digitalizamos automáticamente</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+            <div class="step-icon">🪄</div>
+            <div class="step-title">Pruébatela</div>
+            <div class="step-desc">Ve cómo te queda cada prenda sobre tu avatar en segundos</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+            <div class="step-icon">✨</div>
+            <div class="step-title">Conjuntos</div>
+            <div class="step-desc">Recibe recomendaciones basadas en teoría del color y estilo</div>
+        </div>
+    </div>
+
+    <p class="hero-footer">Vistify · Armario Digital Inteligente</p>
+</section>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vistify — Mi Avatar</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <a href="../index.html" class="navbar-logo">Vistify</a>
+    <ul class="navbar-links">
+        <li><a href="avatar.html" class="active">👤 Avatar</a></li>
+        <li><a href="ropa.html">👗 Mi Ropa</a></li>
+        <li><a href="conjuntos.html">✨ Conjuntos</a></li>
+    </ul>
+</nav>
+
+<!-- Loader -->
+<div class="loader-overlay" id="loader">
+    <div class="spinner"></div>
+    <p class="loader-text">Generando tu avatar...</p>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Contenido -->
+<div class="page-container">
+    <div class="page-header">
+        <span class="step-badge">PASO 1 DE 3</span>
+        <h1 class="page-title">👤 Tu Avatar</h1>
+        <p class="page-subtitle">Sube una foto de cuerpo completo y generamos tu avatar con medidas reales</p>
+    </div>
+
+    <div class="two-col">
+
+        <!-- Columna izquierda: subir foto -->
+        <div>
+            <div class="card" style="margin-bottom:1rem;">
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">
+                    📌 Para mejores resultados usa una foto <strong>frontal</strong>, de <strong>cuerpo completo</strong> y con fondo liso.
+                </p>
+
+                <!-- Upload area -->
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📸</div>
+                    <p><span>Haz clic</span> o arrastra tu foto aquí</p>
+                    <p style="font-size:0.8rem; margin-top:4px;">JPG, PNG · Máx. 10MB</p>
+                    <input type="file" id="fotoInput" accept="image/*" style="display:none">
+                </div>
+
+                <!-- Preview de la foto subida -->
+                <div style="margin-top:1rem; display:none;" id="previewContainer">
+                    <img id="previewImg" class="preview-img" style="max-height:300px; object-fit:contain;">
+                </div>
+            </div>
+
+            <!-- Altura -->
+            <div class="card" style="margin-bottom:1rem;">
+                <label style="font-size:0.9rem; color:var(--text-muted); display:block; margin-bottom:0.5rem;">
+                    📏 Tu altura real (cm)
+                </label>
+                <input type="number" id="alturaInput" value="170" min="100" max="220"
+                    style="width:100%; background:var(--bg3); border:1px solid var(--border);
+                           border-radius:10px; padding:0.7rem 1rem; color:var(--text);
+                           font-size:1rem; outline:none;">
+            </div>
+
+            <button class="btn btn-primary btn-full" id="btnGenerar" disabled>
+                🧬 Generar Avatar
+            </button>
+        </div>
+
+        <!-- Columna derecha: resultado -->
+        <div>
+            <!-- Placeholder -->
+            <div class="img-placeholder" id="avatarPlaceholder">
+                <span>👤</span>
+                <p>Tu avatar aparecerá aquí</p>
+            </div>
+
+            <!-- Avatar generado -->
+            <img id="avatarImg" class="preview-img" style="display:none; max-height:500px; object-fit:contain;">
+
+            <!-- Medidas -->
+            <div id="medidasSection" style="display:none; margin-top:1.5rem;">
+                <h3 style="margin-bottom:0.75rem; font-size:1rem;">📏 Tus medidas</h3>
+                <div class="metrics-grid" id="metricsGrid"></div>
+            </div>
+
+            <!-- Botón siguiente -->
+            <div id="btnSiguienteContainer" style="display:none; margin-top:1.5rem;">
+                <a href="ropa.html" class="btn btn-primary btn-full">
+                    Siguiente: Mi Ropa →
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="../js/main.js"></script>
+<script>
+    const fotoInput  = document.getElementById("fotoInput");
+    const btnGenerar = document.getElementById("btnGenerar");
+    let fotoFile = null;
+
+    // Upload area
+    initUploadArea("uploadArea", "fotoInput", files => {
+        if (!files[0]) return;
+        fotoFile = files[0];
+        document.getElementById("previewContainer").style.display = "block";
+        previewImage(fotoFile, "previewImg", null);
+        btnGenerar.disabled = false;
+    });
+
+    // Generar avatar (conectado al backend)
+    btnGenerar.addEventListener("click", async () => {
+        if (!fotoFile) return;
+        showLoader("Analizando tu cuerpo...");
+
+        try {
+            const formData = new FormData();
+            formData.append("foto", fotoFile);
+            formData.append("altura", document.getElementById("alturaInput").value);
+
+            const res  = await fetch("/api/avatar", { method: "POST", body: formData });
+            const data = await res.json();
+            hideLoader();
+
+            if (!data.ok) { showToast(data.error, "error"); return; }
+
+            document.getElementById("avatarPlaceholder").style.display = "none";
+            const img = document.getElementById("avatarImg");
+            img.src = data.avatar_url + "?t=" + Date.now();
+            img.style.display = "block";
+
+            const m = data.medidas;
+            const medidas = [
+                { valor: m.hombros + " cm", label: "Hombros" },
+                { valor: m.pecho   + " cm", label: "Pecho" },
+                { valor: m.cintura + " cm", label: "Cintura" },
+                { valor: m.cadera  + " cm", label: "Cadera" },
+                { valor: m.pierna  + " cm", label: "Pierna" },
+                { valor: m.torso   + " cm", label: "Torso" },
+            ];
+
+            document.getElementById("metricsGrid").innerHTML = medidas.map(m => `
+                <div class="metric-box">
+                    <div class="metric-value">${m.valor}</div>
+                    <div class="metric-label">${m.label}</div>
+                </div>
+            `).join("");
+
+            document.getElementById("medidasSection").style.display = "block";
+            document.getElementById("btnSiguienteContainer").style.display = "block";
+            showToast("Avatar generado correctamente");
+        } catch(e) {
+            hideLoader();
+            showToast("Error conectando con el servidor", "error");
+        }
+    });
+</script>
+</body>
+</html>

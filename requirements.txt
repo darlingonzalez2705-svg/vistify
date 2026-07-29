@@ -1,0 +1,28 @@
+# Eliminación de fondo
+rembg==2.0.77
+Pillow>=10.0.0
+
+# Procesamiento de imágenes y visión
+opencv-python>=4.9.0.80
+numpy>=1.26.4
+
+# Detección de color y estilo
+scikit-learn>=1.4.2
+colorthief>=0.2.1
+transformers>=4.41.2
+torch>=2.3.1
+torchvision>=0.18.1
+
+# Avatar y medidas corporales
+mediapipe>=0.10.14
+matplotlib>=3.9.0
+
+# Recomendación de conjuntos
+pandas>=2.2.2
+
+# Interfaz
+streamlit>=1.35.0
+
+# Utilidades
+tqdm>=4.66.4
+python-dotenv>=1.0.1

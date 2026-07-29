@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vistify — Mi Ropa</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <a href="../index.html" class="navbar-logo">Vistify</a>
+    <ul class="navbar-links">
+        <li><a href="avatar.html">👤 Avatar</a></li>
+        <li><a href="ropa.html" class="active">👗 Mi Ropa</a></li>
+        <li><a href="conjuntos.html">✨ Conjuntos</a></li>
+    </ul>
+</nav>
+
+<!-- Loader -->
+<div class="loader-overlay" id="loader">
+    <div class="spinner"></div>
+    <p class="loader-text">Analizando prendas...</p>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Contenido -->
+<div class="page-container">
+    <div class="page-header">
+        <span class="step-badge">PASO 2 DE 3</span>
+        <h1 class="page-title">👗 Mi Ropa</h1>
+        <p class="page-subtitle">Sube fotos de tus prendas · Las analizamos y digitalizamos automáticamente</p>
+    </div>
+
+    <!-- Upload -->
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">👗</div>
+            <p><span>Haz clic</span> o arrastra tus fotos aquí</p>
+            <p style="font-size:0.8rem; margin-top:4px;">Puedes subir varias prendas a la vez · JPG, PNG</p>
+            <input type="file" id="ropaInput" accept="image/*" multiple style="display:none">
+        </div>
+    </div>
+
+    <!-- Preview de fotos seleccionadas -->
+    <div id="selectedSection" style="display:none; margin-bottom:1.5rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+            <h3 id="selectedCount" style="font-size:1rem;"></h3>
+            <button class="btn btn-primary" id="btnAnalizar">🔍 Analizar ropa</button>
+        </div>
+        <div class="clothes-grid" id="selectedGrid"></div>
+    </div>
+
+    <!-- Armario (prendas analizadas) -->
+    <div id="armarioSection" style="display:none;">
+        <hr style="margin-bottom:1.5rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+            <h2 style="font-size:1.2rem;">🗂️ Tu armario virtual</h2>
+            <a href="conjuntos.html" class="btn btn-primary">Ver conjuntos →</a>
+        </div>
+        <div class="clothes-grid" id="armarioGrid"></div>
+    </div>
+
+</div>
+
+<script src="../js/main.js"></script>
+<script>
+    let archivosSeleccionados = [];
+
+    initUploadArea("uploadArea", "ropaInput", files => {
+        archivosSeleccionados = [...archivosSeleccionados, ...Array.from(files)];
+        renderSelected();
+    });
+
+    function renderSelected() {
+        if (!archivosSeleccionados.length) return;
+
+        document.getElementById("selectedSection").style.display = "block";
+        document.getElementById("selectedCount").textContent =
+            `${archivosSeleccionados.length} prenda(s) seleccionada(s)`;
+
+        const grid = document.getElementById("selectedGrid");
+        grid.innerHTML = "";
+
+        archivosSeleccionados.forEach((file, i) => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const card = document.createElement("div");
+                card.className = "cloth-card";
+                card.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}">
+                    <div class="cloth-card-info">
+                        <div class="cloth-type" style="font-size:0.75rem; color:var(--text-muted);">${file.name}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    document.getElementById("btnAnalizar").addEventListener("click", async () => {
+        if (!archivosSeleccionados.length) return;
+        showLoader("Analizando prendas...");
+
+        try {
+            const formData = new FormData();
+            archivosSeleccionados.forEach(f => formData.append("fotos", f));
+
+            const res  = await fetch("/api/ropa", { method: "POST", body: formData });
+            const data = await res.json();
+            hideLoader();
+
+            if (!data.ok) { showToast(data.error, "error"); return; }
+
+            const grid = document.getElementById("armarioGrid");
+            grid.innerHTML = "";
+            data.prendas.forEach(p => {
+                const card = document.createElement("div");
+                card.className = "cloth-card";
+                card.innerHTML = `
+                    <img src="${p.imagen}?t=${Date.now()}" alt="${p.tipo}">
+                    <div class="cloth-card-info">
+                        <div class="cloth-type">${p.tipo}</div>
+                        <div class="cloth-color">
+                            <span class="color-dot" style="background:${p.hex}"></span>
+                            ${p.color}
+                        </div>
+                        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">✨ ${p.estilo}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById("armarioSection").style.display = "block";
+            showToast(`${data.prendas.length} prendas analizadas`);
+        } catch(e) {
+            hideLoader();
+            showToast("Error conectando con el servidor", "error");
+        }
+    });
+</script>
+</body>
+</html>
